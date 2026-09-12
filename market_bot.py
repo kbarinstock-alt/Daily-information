@@ -95,14 +95,14 @@ def us_market_report():
 
     now = datetime.now(ZoneInfo("Asia/Taipei"))
 
-    markets = [
+    indices = [
         ("S&P 500", "%5EGSPC"),
         ("NASDAQ", "%5EIXIC"),
         ("道瓊工業", "%5EDJI"),
         ("費城半導體", "%5ESOX"),
     ]
 
-    stocks = [
+    tech_stocks = [
         ("NVIDIA", "NVDA"),
         ("Apple", "AAPL"),
         ("Microsoft", "MSFT"),
@@ -113,26 +113,188 @@ def us_market_report():
         ("台積電 ADR", "TSM"),
     ]
 
+    macro = [
+        ("VIX 恐慌指數", "%5EVIX"),
+        ("美元指數", "DX-Y.NYB"),
+        ("美國10年期公債殖利率", "%5ETNX"),
+    ]
+
     text = (
-        "🇺🇸 **美股晨間市場簡報**\n"
+        "🇺🇸 **美股晨間市場簡報 V2**\n"
         f"📅 {now.strftime('%Y/%m/%d %H:%M')} 台北時間\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         "📊 **主要指數**\n\n"
     )
 
-    for name, symbol in markets:
-        text += format_market(name, symbol) + "\n\n"
+    index_changes = []
 
-    text += "━━━━━━━━━━━━━━━━━━\n"
-    text += "💻 **大型科技 / AI 股**\n\n"
+    for name, symbol in indices:
 
-    for name, symbol in stocks:
-        text += format_market(name, symbol) + "\n\n"
+        try:
+            data = get_yahoo_price(symbol)
+
+            if data is None:
+                text += f"⚪ **{name}**：資料不足\n\n"
+                continue
+
+            pct = data["change_pct"]
+            index_changes.append(pct)
+
+            if pct > 0:
+                icon = "🟢"
+            elif pct < 0:
+                icon = "🔴"
+            else:
+                icon = "⚪"
+
+            text += (
+                f"{icon} **{name}**\n"
+                f"`{data['price']:,.2f}` "
+                f"({pct:+.2f}%)\n\n"
+            )
+
+        except Exception as e:
+            print(f"{name} 抓取失敗：{e}")
+            text += f"⚠️ **{name}**：抓取失敗\n\n"
+
+    # =====================================================
+    # 大盤簡單判讀
+    # =====================================================
+    if index_changes:
+
+        avg_change = sum(index_changes) / len(index_changes)
+
+        if avg_change >= 1:
+            market_view = "🔥 美股整體偏強，市場風險偏好明顯升溫。"
+
+        elif avg_change >= 0.3:
+            market_view = "📈 美股整體偏多，主要指數多數走高。"
+
+        elif avg_change > -0.3:
+            market_view = "➖ 美股大致震盪，市場方向不明顯。"
+
+        elif avg_change > -1:
+            market_view = "📉 美股整體偏弱，市場風險偏好下降。"
+
+        else:
+            market_view = "⚠️ 美股明顯走弱，需留意風險情緒快速惡化。"
+
+    else:
+        market_view = "⚪ 暫時無法判讀整體市場方向。"
 
     text += (
         "━━━━━━━━━━━━━━━━━━\n"
-        "🤖 自動市場情報系統\n"
-        "資料來源：Yahoo Finance"
+        "🧭 **市場氣氛判讀**\n\n"
+        f"{market_view}\n\n"
+    )
+
+    # =====================================================
+    # 科技 / AI
+    # =====================================================
+    text += (
+        "━━━━━━━━━━━━━━━━━━\n"
+        "🤖 **大型科技 / AI 股**\n\n"
+    )
+
+    tech_performance = []
+
+    for name, symbol in tech_stocks:
+
+        try:
+            data = get_yahoo_price(symbol)
+
+            if data is None:
+                text += f"⚪ **{name}**：資料不足\n\n"
+                continue
+
+            pct = data["change_pct"]
+            tech_performance.append((name, pct))
+
+            if pct > 0:
+                icon = "🟢"
+            elif pct < 0:
+                icon = "🔴"
+            else:
+                icon = "⚪"
+
+            text += (
+                f"{icon} **{name}** "
+                f"`{data['price']:,.2f}` "
+                f"({pct:+.2f}%)\n"
+            )
+
+        except Exception as e:
+            print(f"{name} 抓取失敗：{e}")
+            text += f"⚠️ **{name}**：抓取失敗\n"
+
+    # =====================================================
+    # 強弱股
+    # =====================================================
+    if tech_performance:
+
+        strongest = max(tech_performance, key=lambda x: x[1])
+        weakest = min(tech_performance, key=lambda x: x[1])
+
+        text += (
+            "\n"
+            f"🚀 最強：**{strongest[0]}** {strongest[1]:+.2f}%\n"
+            f"🧊 最弱：**{weakest[0]}** {weakest[1]:+.2f}%\n"
+        )
+
+    # =====================================================
+    # 總經 / 風險
+    # =====================================================
+    text += (
+        "\n━━━━━━━━━━━━━━━━━━\n"
+        "🌎 **風險與總經指標**\n\n"
+    )
+
+    for name, symbol in macro:
+
+        try:
+            data = get_yahoo_price(symbol)
+
+            if data is None:
+                text += f"⚪ **{name}**：資料不足\n"
+                continue
+
+            pct = data["change_pct"]
+
+            if pct > 0:
+                icon = "🟢"
+            elif pct < 0:
+                icon = "🔴"
+            else:
+                icon = "⚪"
+
+            text += (
+                f"{icon} **{name}** "
+                f"`{data['price']:,.2f}` "
+                f"({pct:+.2f}%)\n"
+            )
+
+        except Exception as e:
+            print(f"{name} 抓取失敗：{e}")
+            text += f"⚠️ **{name}**：抓取失敗\n"
+
+    # =====================================================
+    # 對台股影響
+    # =====================================================
+    text += (
+        "\n━━━━━━━━━━━━━━━━━━\n"
+        "🇹🇼 **今日台股開盤前觀察**\n\n"
+        "• 費半與 NVIDIA：觀察半導體 / AI 族群氣氛\n"
+        "• 台積電 ADR：觀察台積電現貨開盤方向\n"
+        "• VIX：判斷全球風險情緒\n"
+        "• 美國10年債殖利率：留意高估值科技股壓力\n"
+        "• 美元指數：觀察資金風險偏好與亞洲市場壓力\n"
+    )
+
+    text += (
+        "\n━━━━━━━━━━━━━━━━━━\n"
+        "🤖 GitHub Actions 自動市場情報系統\n"
+        "資料來源：Yahoo Finance\n"
+        "⚠️ 僅供市場資訊整理，不構成投資建議"
     )
 
     return text
