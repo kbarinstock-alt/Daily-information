@@ -6,6 +6,7 @@ on:
     - cron: "30 7 * * 1-5"
 
   workflow_dispatch:
+
 jobs:
   run-discord-bot:
     runs-on: ubuntu-latest
