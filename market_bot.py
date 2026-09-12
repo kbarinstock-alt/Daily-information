@@ -16,9 +16,10 @@ def get_yahoo_price(symbol):
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 
     params = {
-        "range": "5d",
+        "range": "10d",
         "interval": "1d",
-        "includePrePost": "false"
+        "includePrePost": "false",
+        "events": "div,splits"
     }
 
     headers = {
@@ -37,41 +38,31 @@ def get_yahoo_price(symbol):
     data = r.json()
 
     result = data["chart"]["result"][0]
-    meta = result["meta"]
 
-    # 優先使用 Yahoo 的正式 Regular Market Price
-    latest = meta.get("regularMarketPrice")
+    timestamps = result.get("timestamp", [])
+    closes = result["indicators"]["quote"][0]["close"]
 
-    # 優先取得上一交易日正式收盤價
-    previous = (
-        meta.get("chartPreviousClose")
-        or meta.get("previousClose")
-    )
+    valid_rows = []
 
-    # 如果 Yahoo meta 沒有資料，再退回日K
-    if latest is None or previous is None:
+    for ts, close in zip(timestamps, closes):
+        if close is not None:
+            valid_rows.append((ts, close))
 
-        closes = result["indicators"]["quote"][0]["close"]
-        closes = [x for x in closes if x is not None]
+    if len(valid_rows) < 2:
+        return None
 
-        if len(closes) < 2:
-            return None
-
-        previous = closes[-2]
-        latest = closes[-1]
+    previous_ts, previous = valid_rows[-2]
+    latest_ts, latest = valid_rows[-1]
 
     change = latest - previous
-
-    if previous == 0:
-        change_pct = 0
-    else:
-        change_pct = (change / previous) * 100
+    change_pct = (change / previous) * 100 if previous != 0 else 0
 
     return {
         "price": latest,
         "previous": previous,
         "change": change,
-        "change_pct": change_pct
+        "change_pct": change_pct,
+        "timestamp": latest_ts
     }
 # =========================================================
 # 格式
