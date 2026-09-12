@@ -1,7 +1,6 @@
 name: Discord Market Bot
 
-on:
-  workflow_dispatch:
+on: [push]
 
 jobs:
   test:
