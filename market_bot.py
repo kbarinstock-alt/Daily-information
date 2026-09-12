@@ -17,7 +17,8 @@ def get_yahoo_price(symbol):
 
     params = {
         "range": "5d",
-        "interval": "1d"
+        "interval": "1d",
+        "includePrePost": "false"
     }
 
     headers = {
@@ -36,27 +37,42 @@ def get_yahoo_price(symbol):
     data = r.json()
 
     result = data["chart"]["result"][0]
+    meta = result["meta"]
 
-    closes = result["indicators"]["quote"][0]["close"]
+    # 優先使用 Yahoo 的正式 Regular Market Price
+    latest = meta.get("regularMarketPrice")
 
-    closes = [x for x in closes if x is not None]
+    # 優先取得上一交易日正式收盤價
+    previous = (
+        meta.get("chartPreviousClose")
+        or meta.get("previousClose")
+    )
 
-    if len(closes) < 2:
-        return None
+    # 如果 Yahoo meta 沒有資料，再退回日K
+    if latest is None or previous is None:
 
-    previous = closes[-2]
-    latest = closes[-1]
+        closes = result["indicators"]["quote"][0]["close"]
+        closes = [x for x in closes if x is not None]
+
+        if len(closes) < 2:
+            return None
+
+        previous = closes[-2]
+        latest = closes[-1]
 
     change = latest - previous
-    change_pct = (change / previous) * 100
+
+    if previous == 0:
+        change_pct = 0
+    else:
+        change_pct = (change / previous) * 100
 
     return {
         "price": latest,
+        "previous": previous,
         "change": change,
         "change_pct": change_pct
     }
-
-
 # =========================================================
 # 格式
 # =========================================================
