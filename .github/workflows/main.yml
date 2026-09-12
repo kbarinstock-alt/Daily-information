@@ -25,7 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run market bot
+           - name: Run market bot
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TEST_MODE: US
         run: python market_bot.py
