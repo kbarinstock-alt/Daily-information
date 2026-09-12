@@ -1,4 +1,4 @@
-name: Test Workflow
+name: Discord Market Bot
 
 on:
   workflow_dispatch:
@@ -8,5 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Test
-        run: echo "GitHub Actions works"
+        run: echo "Workflow OK"
