@@ -1,7 +1,11 @@
 name: Discord Market Bot
 
-on: [push]
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"
+    - cron: "30 7 * * 1-5"
 
+  workflow_dispatch:
 jobs:
   run-discord-bot:
     runs-on: ubuntu-latest
