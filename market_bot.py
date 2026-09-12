@@ -384,7 +384,19 @@ print("目前台北時間：", now)
 hour = now.hour
 
 
-if 7 <= hour <= 9:
+test_mode = os.environ.get("TEST_MODE", "").upper()
+
+if test_mode == "US":
+
+    print("手動測試：執行美股晨報")
+    report = us_market_report()
+
+elif test_mode == "TW":
+
+    print("手動測試：執行台股收盤報")
+    report = taiwan_market_report()
+
+elif 7 <= hour <= 9:
 
     print("執行美股晨報")
     report = us_market_report()
