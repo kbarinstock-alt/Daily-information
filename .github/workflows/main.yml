@@ -5,7 +5,17 @@ on:
     - cron: "0 0 * * 1-5"
     - cron: "30 7 * * 1-5"
 
-  workflow_dispatch:
+   workflow_dispatch:
+    inputs:
+      market:
+        description: "選擇手動測試市場"
+        required: true
+        default: "US"
+        type: choice
+        options:
+          - US
+          - TW
+          - AUTO
 
 jobs:
   run-discord-bot:
