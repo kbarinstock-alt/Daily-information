@@ -303,6 +303,36 @@ def us_market_report():
         f"｜{vix_view}\n"
     )
 
+elif symbol == "DX-Y.NYB":
+
+    dollar = data["price"]
+    pct = data["change_pct"]
+
+    if pct >= 0.5:
+        dollar_view = "美元明顯走強，對風險資產偏壓力"
+    elif pct > 0:
+        dollar_view = "美元小幅走強"
+    elif pct <= -0.5:
+        dollar_view = "美元明顯走弱，風險資產壓力減輕"
+    elif pct < 0:
+        dollar_view = "美元小幅走弱"
+    else:
+        dollar_view = "美元大致持平"
+
+    if pct > 0:
+        icon = "🔴"
+    elif pct < 0:
+        icon = "🟢"
+    else:
+        icon = "⚪"
+
+    text += (
+        f"{icon} **{name}** "
+        f"`{dollar:.2f}` "
+        f"({pct:+.2f}%) "
+        f"｜{dollar_view}\n"
+    )
+
 elif symbol == "%5ETNX":
 
     latest_yield = data["price"]
