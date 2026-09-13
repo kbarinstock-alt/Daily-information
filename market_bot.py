@@ -256,23 +256,46 @@ def us_market_report():
         "🌎 **風險與總經指標**\n\n"
     )
 
-    for name, symbol in macro:
+   for name, symbol in macro:
 
-        try:
-            data = get_yahoo_price(symbol)
+    try:
+        data = get_yahoo_price(symbol)
 
-            if data is None:
-                text += f"⚪ **{name}**：資料不足\n"
-                continue
+        if data is None:
+            text += f"⚪ **{name}**：資料不足\n"
+            continue
 
-            pct = data["change_pct"]
+        pct = data["change_pct"]
 
-            if pct > 0:
-                icon = "🟢"
-            elif pct < 0:
+        if pct > 0:
+            icon = "🟢"
+        elif pct < 0:
+            icon = "🔴"
+        else:
+            icon = "⚪"
+
+        # 美國10年債殖利率改用 bps 顯示
+        if symbol == "%5ETNX":
+
+            latest_yield = data["price"]
+            previous_yield = data["previous"]
+
+            bps_change = (latest_yield - previous_yield) * 10
+
+            if bps_change > 0:
                 icon = "🔴"
+            elif bps_change < 0:
+                icon = "🟢"
             else:
                 icon = "⚪"
+
+            text += (
+                f"{icon} **{name}** "
+                f"`{latest_yield:.2f}%` "
+                f"({bps_change:+.1f} bps)\n"
+            )
+
+        else:
 
             text += (
                 f"{icon} **{name}** "
@@ -280,10 +303,9 @@ def us_market_report():
                 f"({pct:+.2f}%)\n"
             )
 
-        except Exception as e:
-            print(f"{name} 抓取失敗：{e}")
-            text += f"⚠️ **{name}**：抓取失敗\n"
-
+    except Exception as e:
+        print(f"{name} 抓取失敗：{e}")
+        text += f"⚠️ **{name}**：抓取失敗\n"
     # =====================================================
     # 對台股影響
     # =====================================================
