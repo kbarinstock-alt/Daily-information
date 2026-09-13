@@ -275,34 +275,61 @@ def us_market_report():
             icon = "⚪"
 
         # 美國10年債殖利率改用 bps 顯示
-        if symbol == "%5ETNX":
+        if symbol == "%5EVIX":
 
-            latest_yield = data["price"]
-            previous_yield = data["previous"]
+    vix = data["price"]
+    pct = data["change_pct"]
 
-            bps_change = (latest_yield - previous_yield) * 10
+    if vix < 15:
+        vix_view = "市場情緒偏穩定"
+    elif vix < 20:
+        vix_view = "市場情緒正常"
+    elif vix < 30:
+        vix_view = "市場避險情緒升高"
+    else:
+        vix_view = "⚠️ 市場恐慌程度偏高"
 
-            if bps_change > 0:
-                icon = "🔴"
-            elif bps_change < 0:
-                icon = "🟢"
-            else:
-                icon = "⚪"
+    if pct > 0:
+        icon = "🔴"
+    elif pct < 0:
+        icon = "🟢"
+    else:
+        icon = "⚪"
 
-            text += (
-                f"{icon} **{name}** "
-                f"`{latest_yield:.2f}%` "
-                f"({bps_change:+.1f} bps)\n"
-            )
+    text += (
+        f"{icon} **{name}** "
+        f"`{vix:.2f}` "
+        f"({pct:+.2f}%) "
+        f"｜{vix_view}\n"
+    )
 
-        else:
+elif symbol == "%5ETNX":
 
-            text += (
-                f"{icon} **{name}** "
-                f"`{data['price']:,.2f}` "
-                f"({pct:+.2f}%)\n"
-            )
+    latest_yield = data["price"]
+    previous_yield = data["previous"]
 
+    bps_change = (latest_yield - previous_yield) * 10
+
+    if bps_change > 0:
+        icon = "🔴"
+    elif bps_change < 0:
+        icon = "🟢"
+    else:
+        icon = "⚪"
+
+    text += (
+        f"{icon} **{name}** "
+        f"`{latest_yield:.2f}%` "
+        f"({bps_change:+.1f} bps)\n"
+    )
+
+else:
+
+    text += (
+        f"{icon} **{name}** "
+        f"`{data['price']:,.2f}` "
+        f"({pct:+.2f}%)\n"
+    )
     except Exception as e:
         print(f"{name} 抓取失敗：{e}")
         text += f"⚠️ **{name}**：抓取失敗\n"
